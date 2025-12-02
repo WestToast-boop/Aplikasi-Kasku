@@ -22,20 +22,18 @@
 
                 <div id="alert-container"></div>
 
-                <form id="loginForm" onsubmit="login(event)">
+                <form action="config/config_login.php" method="POST">
                     <div class="mb-3">
-                        <label for="username" class="form-label visually-hidden">Username</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
-                            <input type="text" id="username" class="form-control" placeholder="Username" required>
+                            <input type="text" name="username" class="form-control" placeholder="Username" required>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="password" class="form-label visually-hidden">Password</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white"><i class="bi bi-lock"></i></span>
-                            <input type="password" id="password" class="form-control" placeholder="Password" required>
+                            <input type="password" name="password" class="form-control" placeholder="Password" required>
                         </div>
                     </div>
 
@@ -43,65 +41,12 @@
                         <button type="submit" class="btn btn-primary btn-login">MASUK</button>
                     </div>
                 </form>
+
             </div>
         </div>
     </div>
 
     <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function login(event) {
-            event.preventDefault();
-
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const alertContainer = document.getElementById('alert-container');
-
-            if (username === 'ketua' && password === '1234') {
-                const successAlert = `
-          <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <strong>Berhasil!</strong> Anda berhasil login.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>`;
-                alertContainer.innerHTML = successAlert;
-
-                setTimeout(() => {
-                    window.location.replace("ketua/dashboard_ketua.php");
-                }, 1000);
-
-            } else if (username === 'warga' && password === '12345') {
-                const successAlert = `
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <strong>Berhasil!</strong> Anda berhasil login sebagai User.
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>`;
-                alertContainer.innerHTML = successAlert;
-
-                setTimeout(() => {
-                    window.location.replace("warga/dashboard_warga.php");
-                }, 1000);
-
-            } else if (username === 'bendahara' && password === '123456') {
-                const successAlert = `
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <strong>Berhasil!</strong> Anda berhasil login sebagai User.
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>`;
-                alertContainer.innerHTML = successAlert;
-
-                setTimeout(() => {
-                    window.location.replace("bendahara/dashboard_bendahara.php");
-                }, 1000);
-
-            } else {
-                const errorAlert = `
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Gagal!</strong> Username atau password salah.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>`;
-                alertContainer.innerHTML = errorAlert;
-            }
-        }
-    </script>
 </body>
 
 </html>

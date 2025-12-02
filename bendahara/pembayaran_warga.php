@@ -14,7 +14,7 @@
 
 <body>
     <!-- Sidebar -->
-    <?php include 'sidebar_bendahara.php'; ?>
+    <?php include '../sidebar.php'; ?>
 
     <!-- Main Content -->
     <div class="main-content">

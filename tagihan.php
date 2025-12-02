@@ -1,3 +1,22 @@
+<?php
+session_start();
+include "config/connect.php";
+
+if (!isset($_SESSION['userId'])) {
+    die("Session userId tidak ditemukan. Pastikan login menyimpan session userId.");
+}
+
+$user = $_SESSION['userId'];
+
+$query = mysqli_query(
+    $koneksi,
+    "SELECT * FROM tagihan WHERE userId = '$user' ORDER BY t_tanggal DESC"
+);
+
+include "sidebar.php";
+?>
+
+
 <!DOCTYPE html>
 <html lang="id">
 
@@ -5,15 +24,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tagihan</title>
-    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/sidebar.css">
-    <link rel="stylesheet" href="../css/tagihan.css">
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/tagihan.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 
 <body>
-    <?php include 'sidebar_ketua.php'; ?>
-
     <div class="main-content">
         <div class="container mt-4">
             <div class="table-container">
@@ -28,28 +45,31 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>01-01-2025</td>
-                            <td>Keamanan</td>
-                            <td>Rp 20.000</td>
-                            <td><button class="ststatus-btn btn btn-danger" data-bs-toggle="modal"
-                                    data-bs-target="#modalPembayaran">Belum Bayar</button></td>
-                        </tr>
-                        <tr>
-                            <td>01-02-2025</td>
-                            <td>Kebersihan</td>
-                            <td>Rp 7.000</td>
-                            <td><button class="status-btn btn btn-success" data-bs-toggle="modal"
-                                    data-bs-target="#modalDetailPembayaran">Sudah Bayar</button></td>
-                        </tr>
-                        <tr>
-                            <td>01-08-2025</td>
-                            <td>17 Agustus</td>
-                            <td>Rp 10.000</td>
-                            <td><button class="status-btn btn btn-primary" data-bs-toggle="modal"
-                                    data-bs-target="#modalDetailPembayaran">Proses</button></td>
-                        </tr>
+                        <?php while ($row = mysqli_fetch_assoc($query)): ?>
+                            <tr>
+                                <td><?= date('d-m-Y', strtotime($row['t_tanggal'])) ?></td>
+                                <td><?= $row['t_keterangan'] ?></td>
+                                <td>Rp <?= number_format($row['t_jumlah'], 0, ',', '.') ?></td>
+                                <td>
+                                    <?php if ($row['t_status'] == 'Belum Bayar'): ?>
+                                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalPembayaran"
+                                            data-id="<?= $row['tId'] ?>">Belum Bayar</button>
+
+                                    <?php elseif ($row['t_status'] == 'Sudah Bayar'): ?>
+                                        <button class="btn btn-success" data-bs-toggle="modal"
+                                            data-bs-target="#modalDetailPembayaran" data-id="<?= $row['tId'] ?>">Sudah
+                                            Bayar</button>
+
+                                    <?php else: ?>
+                                        <button class="btn btn-primary" data-bs-toggle="modal"
+                                            data-bs-target="#modalDetailPembayaran"
+                                            data-id="<?= $row['tId'] ?>">Diproses</button>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
                     </tbody>
+
                 </table>
             </div>
         </div>
@@ -122,6 +142,23 @@
     </div>
 
     <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll("[data-bs-target='#modalPembayaran']").forEach(btn => {
+            btn.addEventListener("click", () => {
+                let id = btn.getAttribute("data-id");
+
+                fetch("get_tagihan.php?id=" + id)
+                    .then(res => res.json())
+                    .then(data => {
+                        document.getElementById("modalPembayaranLabel").innerText =
+                            "Pembayaran " + data.t_keterangan;
+
+                        document.querySelector(".info-box").innerText = data.no_rek;
+                    });
+            });
+        });
+    </script>
+
 </body>
 
 </html>

@@ -1,3 +1,5 @@
+<?php include '../sidebar.php'
+    ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,26 +15,24 @@
 </head>
 
 <body>
-    <?php include 'sidebar_ketua.php' ?>
-
     <div class="main-content">
         <div class="container mt-4">
             <div class="table-container">
-            <h4 class="mb-3">Data Warga</h4>
-            <input type="text" id="searchInput" class="form-control mb-3" placeholder="🔍 Cari Warga...">
+                <h4 class="mb-3">Data Warga</h4>
+                <input type="text" id="searchInput" class="form-control mb-3" placeholder="🔍 Cari Warga...">
 
-            <table class="table align-middle text-center">
-                <thead>
-                    <tr>
-                        <th>Nama</th>
-                        <th>Status</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="wargaTable">
-                    <!-- Data diisi lewat JavaScript -->
-                </tbody>
-            </table>
+                <table class="table align-middle text-center">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Status</th>
+                            <th>Aksi</th>   
+                        </tr>
+                    </thead>
+                    <tbody id="wargaTable">
+                        <!-- Data diisi lewat JavaScript -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -69,66 +69,99 @@
 
     <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
-        const wargaData = [
-            "Kemas", "Ammar Zoni", "Khayra Imut", "Faiz", "Hendria Bjorka",
-            "Rizky", "Ja Morant", "LeBron James", "Sylus", "Chen Xin Nian"
-        ];
+        let wargaData = [];
 
-        const wargaStatus = {};
+        // Load data dari database
+        async function loadWarga() {
+            const res = await fetch("../config/get_warga.php");
+            wargaData = await res.json();
+            renderTable(wargaData);
+        }
+
+        document.addEventListener("DOMContentLoaded", loadWarga);
+
         const wargaTable = document.getElementById("wargaTable");
         const searchInput = document.getElementById("searchInput");
 
         const modalNama = document.getElementById("modalNama");
         const statusSelect = document.getElementById("statusSelect");
         const saveStatusBtn = document.getElementById("saveStatusBtn");
-        let currentEdit = null;
 
+        let editUserId = null;
+
+        // Render tabel
         function renderTable(data) {
             wargaTable.innerHTML = "";
+
             if (data.length === 0) {
-                wargaTable.innerHTML = `<tr><td colspan="3" class="text-muted fst-italic">Tidak ada warga ditemukan</td></tr>`;
+                wargaTable.innerHTML =
+                    `<tr><td colspan="3" class="text-muted fst-italic">Tidak ada warga ditemukan</td></tr>`;
                 return;
             }
 
-            data.forEach(nama => {
-                const status = wargaStatus[nama] || "Warga";
+            data.forEach(w => {
                 wargaTable.innerHTML += `
-                    <tr>
-                        <td>${nama}</td>
-                        <td>${status}</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm" onclick="editWarga('${nama}')">
-                                <i class="bi bi-pencil"></i> Edit
-                            </button>
-                        </td>
-                    </tr>
-                `;
+            <tr>
+                <td>${w.username}</td>
+                <td>${w.role}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="editWarga(${w.userId}, '${w.username}', '${w.role}')">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                </td>
+            </tr>
+        `;
             });
         }
 
-        function editWarga(nama) {
-            currentEdit = nama;
+        // Buka modal
+        function editWarga(id, nama, role) {
+            editUserId = id;
             modalNama.textContent = nama;
-            statusSelect.value = wargaStatus[nama] || "Warga";
+            statusSelect.value = role;
+
             const modal = new bootstrap.Modal(document.getElementById("modalEditStatus"));
             modal.show();
         }
 
-        saveStatusBtn.addEventListener("click", () => {
+        // Simpan status baru
+        saveStatusBtn.addEventListener("click", async () => {
             const newStatus = statusSelect.value;
-            if (currentEdit) wargaStatus[currentEdit] = newStatus;
-            renderTable(wargaData);
+            const nama = modalNama.textContent;
+
+            const yakin = confirm(`Apakah Anda yakin ingin menjadikan "${nama}" sebagai "${newStatus}"?`);
+            if (!yakin) return;
+
+            const formData = new FormData();
+            formData.append("userId", editUserId);
+            formData.append("role", newStatus);
+
+            const res = await fetch("../config/update_role.php", {
+                method: "POST",
+                body: formData
+            });
+
+            const text = await res.text();
+
+            if (text === "OK") {
+                alert("Status berhasil diperbarui!");
+                loadWarga();
+            } else {
+                alert("Gagal memperbarui status!");
+            }
+
             bootstrap.Modal.getInstance(document.getElementById("modalEditStatus")).hide();
         });
 
+        // Search warga
         searchInput.addEventListener("input", e => {
             const query = e.target.value.toLowerCase();
-            const filtered = wargaData.filter(nama => nama.toLowerCase().includes(query));
-            renderTable(filtered);
-        });
 
-        document.addEventListener("DOMContentLoaded", () => {
-            renderTable(wargaData);
+            const filtered = wargaData.filter(w =>
+                w.username.toLowerCase().includes(query)
+            );
+
+            renderTable(filtered);
         });
     </script>
 </body>
