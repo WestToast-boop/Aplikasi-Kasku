@@ -5,14 +5,16 @@ include "connect.php";
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$username = $_POST['username'];
-$password = md5($_POST['password']);
+$username = $_POST['username'] ?? '';
+$password = md5($_POST['password'] ?? '');
 
 $query = "SELECT * FROM user WHERE username='$username' AND password='$password'";
 $result = mysqli_query($koneksi, $query);
 
 if (!$result) {
-    die("Query error: " . mysqli_error($koneksi));
+    $_SESSION['error'] = "Terjadi kesalahan query: " . mysqli_error($koneksi);
+    header("Location: ../index.php");
+    exit();
 }
 
 if (mysqli_num_rows($result) > 0) {
@@ -22,21 +24,10 @@ if (mysqli_num_rows($result) > 0) {
     $_SESSION['username'] = $data['username'];
     $_SESSION['role'] = $data['role'];
 
-    if ($data['role'] == 'ketua') {
-        header("Location: ../dashboard.php");
-        exit;
-    } elseif ($data['role'] == 'warga') {
-        header("Location: ../dashboard.php");
-        exit;
-    } elseif ($data['role'] == 'bendahara') {
-        header("Location: ../dashboard.php");
-        exit;
-    }
-
-    echo "Role tidak dikenali.";
+    header("Location: ../dashboard.php");
+    exit();
 } else {
-    echo "<script>
-        alert('Username atau password salah!');
-        window.location.href = '../index.php';
-    </script>";
+    $_SESSION['error'] = "Username atau password salah!";
+    header("Location: ../index.php");
+    exit();
 }

@@ -1,75 +1,103 @@
 <?php
 include "config/connect.php";
 include "sidebar.php";
+
 // ============================
-// 1. SALDO KAS TERKINI
+// 1) SALDO KAS TERKINI
+// pemasukan = total tagihan yg pembayarannya disetujui
+// pengeluaran = total pengajuan disetujui
 // ============================
+
 $querySaldo = mysqli_query($koneksi, "
     SELECT 
-        SUM(CASE WHEN bStatus='Verifikasi' THEN bJumlah ELSE 0 END) AS pemasukan,
-        (SELECT SUM(pJumlah) FROM pengajuan WHERE pStatus='Disetujui') AS pengeluaran
-    FROM pembayaran
+        COALESCE((
+            SELECT SUM(t.t_jumlah)
+            FROM pembayaran b
+            JOIN tagihan t ON t.tId = b.tId
+            WHERE b.bStatus = 'Disetujui'
+        ), 0) AS pemasukan,
+        COALESCE((
+            SELECT SUM(pJumlah)
+            FROM pengajuan
+            WHERE pStatus = 'Disetujui'
+        ), 0) AS pengeluaran
 ");
 
 $saldo = mysqli_fetch_assoc($querySaldo);
-$saldoKas = ($saldo['pemasukan'] ?? 0) - ($saldo['pengeluaran'] ?? 0);
+$saldoKas = (float) $saldo['pemasukan'] - (float) $saldo['pengeluaran'];
+
 
 // ============================
-// 2. TOTAL PENGELUARAN BULAN INI
+// 2) TOTAL PENGELUARAN BULAN INI
 // ============================
 $queryKeluar = mysqli_query($koneksi, "
-    SELECT SUM(pJumlah) AS total
+    SELECT COALESCE(SUM(pJumlah), 0) AS total
     FROM pengajuan
     WHERE pStatus='Disetujui'
-    AND MONTH(pTanggal) = MONTH(CURRENT_DATE())
-    AND YEAR(pTanggal) = YEAR(CURRENT_DATE())
+      AND MONTH(pTanggal) = MONTH(CURDATE())
+      AND YEAR(pTanggal)  = YEAR(CURDATE())
 ");
+$pengeluaranBulan = (float) (mysqli_fetch_assoc($queryKeluar)['total'] ?? 0);
 
-$pengeluaranBulan = mysqli_fetch_assoc($queryKeluar)['total'] ?? 0;
 
 // ============================
-// 3. TOTAL PEMASUKAN BULAN INI
+// 3) TOTAL PEMASUKAN BULAN INI
+// (dari pembayaran disetujui + tanggal bayar bTanggal)
 // ============================
 $queryMasuk = mysqli_query($koneksi, "
-    SELECT SUM(bJumlah) AS total
-    FROM pembayaran
-    WHERE bStatus='Verifikasi'
-    AND MONTH(bTanggal) = MONTH(CURRENT_DATE())
-    AND YEAR(bTanggal) = YEAR(CURRENT_DATE())
+    SELECT COALESCE(SUM(t.t_jumlah), 0) AS total
+    FROM pembayaran b
+    JOIN tagihan t ON t.tId = b.tId
+    WHERE b.bStatus='Disetujui'
+      AND MONTH(b.bTanggal) = MONTH(CURDATE())
+      AND YEAR(b.bTanggal)  = YEAR(CURDATE())
 ");
+$pemasukanBulan = (float) (mysqli_fetch_assoc($queryMasuk)['total'] ?? 0);
 
-$pemasukanBulan = mysqli_fetch_assoc($queryMasuk)['total'] ?? 0;
 
 // ============================
-// 4. DATA PIE CHART (Sudah/Belum Membayar)
+// 4) PIE CHART (Sudah vs Belum)
+// sudah = Disetujui
+// belum = NULL atau Verifikasi
 // ============================
 $queryPie = mysqli_query($koneksi, "
-    SELECT 
-        SUM(CASE WHEN t_status='Sudah Bayar' THEN 1 ELSE 0 END) AS sudah,
-        SUM(CASE WHEN t_status='Belum Bayar' THEN 1 ELSE 0 END) AS belum
-    FROM tagihan
+    SELECT
+        SUM(bStatus = 'Disetujui') AS sudah,
+        SUM(bStatus IS NULL OR bStatus = 'Verifikasi') AS belum
+    FROM pembayaran
 ");
-
 $pie = mysqli_fetch_assoc($queryPie);
+$pieSudah = (int) ($pie['sudah'] ?? 0);
+$pieBelum = (int) ($pie['belum'] ?? 0);
+
 
 // ============================
-// 5. DATA BAR CHART (Pendapatan per Bulan)
+// 5) BAR CHART (Pendapatan per Bulan untuk 2024 & 2025)
+// pendapatan = sum tagihan yg disetujui pada bulan tsb (pakai bTanggal)
 // ============================
+$y2024 = array_fill(0, 12, 0);
+$y2025 = array_fill(0, 12, 0);
 
 $queryBar = mysqli_query($koneksi, "
     SELECT 
-        MONTH(bTanggal) AS bulan,
-        SUM(CASE WHEN YEAR(bTanggal)=2024 THEN bJumlah ELSE 0 END) AS y2024,
-        SUM(CASE WHEN YEAR(bTanggal)=2025 THEN bJumlah ELSE 0 END) AS y2025
-    FROM pembayaran
-    WHERE bStatus='Verifikasi'
-    GROUP BY MONTH(bTanggal)
-    ORDER BY bulan
+        YEAR(b.bTanggal) AS tahun,
+        MONTH(b.bTanggal) AS bulan,
+        SUM(t.t_jumlah) AS total
+    FROM pembayaran b
+    JOIN tagihan t ON t.tId = b.tId
+    WHERE b.bStatus='Disetujui'
+      AND YEAR(b.bTanggal) IN (2024, 2025)
+    GROUP BY YEAR(b.bTanggal), MONTH(b.bTanggal)
+    ORDER BY tahun, bulan
 ");
 
-$barData = [];
 while ($row = mysqli_fetch_assoc($queryBar)) {
-    $barData[] = $row;
+    $bulanIdx = (int) $row['bulan'] - 1;
+    $total = (float) $row['total'];
+    if ((int) $row['tahun'] === 2024)
+        $y2024[$bulanIdx] = $total;
+    if ((int) $row['tahun'] === 2025)
+        $y2025[$bulanIdx] = $total;
 }
 ?>
 
@@ -87,9 +115,9 @@ while ($row = mysqli_fetch_assoc($queryBar)) {
 </head>
 
 <body>
-    <!-- Main Content -->
     <div class="main-content">
         <div class="container-fluid">
+
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
                     <div class="card card-info h-100">
@@ -106,7 +134,6 @@ while ($row = mysqli_fetch_assoc($queryBar)) {
                         <div class="card-body text-center">
                             <h6 class="card-title text-muted">Total Pengeluaran Bulan Ini</h6>
                             <h4 class="fw-bold">Rp <?= number_format($pengeluaranBulan, 0, ',', '.') ?></h4>
-                            <p class="small text-muted mb-1">Untuk perbaikan jalan</p>
                             <i class="bi bi-receipt text-primary fs-2"></i>
                         </div>
                     </div>
@@ -127,11 +154,12 @@ while ($row = mysqli_fetch_assoc($queryBar)) {
                 <div class="col-lg-7">
                     <div class="card">
                         <div class="card-body">
-                            <h6 class="mb-3">Grafik Pendapatan</h6>
+                            <h6 class="mb-3">Grafik Pendapatan (Pembayaran Disetujui)</h6>
                             <canvas id="barChart"></canvas>
                         </div>
                     </div>
                 </div>
+
                 <div class="col-lg-5">
                     <div class="card">
                         <div class="card-body">
@@ -141,24 +169,24 @@ while ($row = mysqli_fetch_assoc($queryBar)) {
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
-        // PIE DATA
-        const pieDataSudah = <?= $pie['sudah'] ?>;
-        const pieDataBelum = <?= $pie['belum'] ?>;
+        // PIE
+        const pieDataSudah = <?= (int) $pieSudah ?>;
+        const pieDataBelum = <?= (int) $pieBelum ?>;
 
-        // BAR DATA
-        const data2024 = <?= json_encode(array_values($y2024)) ?>;
-        const data2025 = <?= json_encode(array_values($y2025)) ?>;
+        // BAR
+        const data2024 = <?= json_encode($y2024) ?>;
+        const data2025 = <?= json_encode($y2025) ?>;
 
-        // ------- BAR CHART -------
-        const ctxBar = document.getElementById('barChart').getContext('2d');
-        new Chart(ctxBar, {
+        // BAR CHART
+        new Chart(document.getElementById('barChart'), {
             type: 'bar',
             data: {
                 labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
@@ -170,9 +198,8 @@ while ($row = mysqli_fetch_assoc($queryBar)) {
             options: { responsive: true }
         });
 
-        // ------- PIE CHART -------
-        const ctxPie = document.getElementById('pieChart').getContext('2d');
-        new Chart(ctxPie, {
+        // PIE CHART
+        new Chart(document.getElementById('pieChart'), {
             type: 'pie',
             data: {
                 labels: ['Sudah Membayar', 'Belum Membayar'],
@@ -181,11 +208,9 @@ while ($row = mysqli_fetch_assoc($queryBar)) {
                     backgroundColor: ['#00c6ff', '#b2f0e9']
                 }]
             },
-            options: {
-                plugins: { legend: { position: 'bottom' } }
-            }
+            options: { plugins: { legend: { position: 'bottom' } } }
         });
     </script>
 </body>
 
-</html>
+</html> 
