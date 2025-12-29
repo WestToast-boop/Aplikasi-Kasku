@@ -102,7 +102,7 @@ include '../sidebar.php'
                 </div>
 
                 <!-- Form submit -->
-                <form id="formStatus" method="POST" action="update_status.php"></form>
+                <form id="formStatus" method="POST" action="../config/update_status.php"></form>
 
                 <!-- Tombol aksi: hanya tampil jika status = Diproses -->
                 <div id="formActions" class="modal-footer border-0 justify-content-center gap-3">

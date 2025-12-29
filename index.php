@@ -1,3 +1,6 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="id">
 
@@ -20,7 +23,26 @@
                     <p class="text-muted small mb-3">Silakan masuk untuk melanjutkan</p>
                 </div>
 
-                <div id="alert-container"></div>
+                <!-- ALERT CONTAINER -->
+                <div id="alert-container">
+                    <?php if (!empty($_SESSION['error'])): ?>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Error!</strong> <?= $_SESSION['error']; ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        <?php unset($_SESSION['error']); ?>
+                    <?php endif; ?>
+
+                    <?php if (!empty($_SESSION['success'])): ?>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <strong>Berhasil!</strong> <?= $_SESSION['success']; ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        <?php unset($_SESSION['success']); ?>
+                    <?php endif; ?>
+                </div>
 
                 <form action="config/config_login.php" method="POST">
                     <div class="mb-3">
