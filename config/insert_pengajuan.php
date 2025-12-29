@@ -1,41 +1,69 @@
 <?php
-require_once __DIR__.'/connect.php';
+include "connect.php";
+session_start();
+
 header('Content-Type: application/json');
 
-$pDetail = $_POST['pDetail'] ?? '';
+// Ambil userId dari session
+$pengaju_userid = $_SESSION['userId'] ?? null;
+$role = $_SESSION['role'] ?? null;
+
+if (!$pengaju_userid) {
+    echo json_encode(['success' => false, 'message' => 'User belum login']);
+    exit;
+}
+
+// (Opsional tapi bagus) batasi siapa yang boleh mengajukan
+// kalau bendahara saja yang boleh, ubah kondisinya.
+if ($role && !in_array($role, ['bendahara', 'warga'])) {
+    echo json_encode(['success' => false, 'message' => 'Akses ditolak']);
+    exit;
+}
+
+$pDetail = $_POST['pDetail'] ?? ''; // sekarang dianggap "detail" bukan "nama"
 $pTanggal = $_POST['pTanggal'] ?? '';
 $pKeterangan = $_POST['pKeterangan'] ?? '';
-$pJumlah = $_POST['pJumlah'] ?? '';
-$pStatus = $_POST['pStatus'] ?? 'Diproses';
+$pJumlah = $_POST['pJumlah'] ?? 0;
+$jenis_pengajuan = $_POST['jenis_pengajuan'] ?? 'Pemasukan';
 
-if(!$pDetail || !$pTanggal || !$pKeterangan || !$pJumlah){
-echo json_encode([
-'success'=>false,
-'message'=>'Data tidak lengkap'
-]);
-exit;
+// Status jangan dari POST (biar aman)
+$pStatus = 'Diproses';
+
+$sql = "
+    INSERT INTO pengajuan (
+        pengaju_userid,
+        pDetail,
+        pTanggal,
+        pKeterangan,
+        pJumlah,
+        jenis_pengajuan,
+        pStatus,
+        digunakan
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'Tidak')
+";
+
+$stmt = $koneksi->prepare($sql);
+if (!$stmt) {
+    echo json_encode(['success' => false, 'message' => $koneksi->error]);
+    exit;
 }
-
-$stmt = $koneksi->prepare("
-INSERT INTO pengajuan
-(pDetail,pTanggal,pKeterangan,pJumlah,pStatus,digunakan)
-VALUES (?,?,?,?,?, 'Tidak')
-");
 
 $stmt->bind_param(
-"sssds",
-$pDetail,
-$pTanggal,
-$pKeterangan,
-$pJumlah,
-$pStatus
+    "isssdss",
+    $pengaju_userid,
+    $pDetail,
+    $pTanggal,
+    $pKeterangan,
+    $pJumlah,
+    $jenis_pengajuan,
+    $pStatus
 );
 
-if($stmt->execute()){
-echo json_encode(['success'=>true]);
-}else{
-echo json_encode([
-'success'=>false,
-'message'=>$stmt->error
-]);
+if ($stmt->execute()) {
+    echo json_encode(['success' => true]);
+} else {
+    echo json_encode(['success' => false, 'message' => $stmt->error]);
 }
+
+$stmt->close();
+$koneksi->close();

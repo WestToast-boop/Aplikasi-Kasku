@@ -1,10 +1,20 @@
 <?php
 include 'connect.php';
+session_start();
 
 $query = "
-  SELECT pId, pKeterangan, pJumlah, pStatus, digunakan
-  FROM pengajuan
-  ORDER BY pTanggal DESC
+  SELECT
+    p.pId,
+    u.username AS nama_pengaju,
+    p.pTanggal,
+    p.pKeterangan,
+    p.pJumlah,
+    p.jenis_pengajuan,
+    p.pStatus,
+    p.digunakan
+  FROM pengajuan p
+  JOIN user u ON u.userId = p.pengaju_userid
+  ORDER BY p.pTanggal DESC
 ";
 
 $result = mysqli_query($koneksi, $query);

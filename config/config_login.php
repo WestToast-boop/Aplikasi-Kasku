@@ -6,20 +6,34 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 $username = $_POST['username'] ?? '';
-$password = md5($_POST['password'] ?? '');
+$password = $_POST['password'] ?? '';
 
-$query = "SELECT * FROM user WHERE username='$username' AND password='$password'";
-$result = mysqli_query($koneksi, $query);
+$stmt = $koneksi->prepare("SELECT userId, username, role, password FROM user WHERE username=? LIMIT 1");
+$stmt->bind_param("s", $username);
+$stmt->execute();
+$result = $stmt->get_result();
 
-if (!$result) {
-    $_SESSION['error'] = "Terjadi kesalahan query: " . mysqli_error($koneksi);
+if ($result->num_rows === 0) {
+    $_SESSION['error'] = "Username atau password salah!";
     header("Location: ../index.php");
     exit();
 }
 
-if (mysqli_num_rows($result) > 0) {
-    $data = mysqli_fetch_assoc($result);
+$data = $result->fetch_assoc();
+$hash = $data['password'];
 
+// support untuk akun lama (md5) + akun baru (password_hash)
+$ok = false;
+
+// kalau hash bcrypt (password_hash)
+if (str_starts_with($hash, '$2y$') || str_starts_with($hash, '$2a$') || str_starts_with($hash, '$2b$')) {
+    $ok = password_verify($password, $hash);
+} else {
+    // fallback md5 untuk akun lama
+    $ok = (md5($password) === $hash);
+}
+
+if ($ok) {
     $_SESSION['userId'] = $data['userId'];
     $_SESSION['username'] = $data['username'];
     $_SESSION['role'] = $data['role'];

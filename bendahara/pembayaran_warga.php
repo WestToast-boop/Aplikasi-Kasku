@@ -23,19 +23,7 @@
                 <button class="btn btn-primary btn-sm btn-add" id="btnTambahTagihan">
                     <i class="bi bi-plus-circle"></i> Tambah Tagihan Baru
                 </button>
-                <button class="btn btn-outline-secondary btn-sm btn-search" id="btnCariWarga">
-                    <i class="bi bi-search"></i> Cari Warga
-                </button>
-                <button class="btn btn-outline-secondary btn-sm btn-import" id="btnImportData">
-                    <i class="bi bi-download"></i> Import Data Pembayaran
-                </button>
             </div>
-
-            <!-- Search Input (hidden by default) -->
-            <div id="searchInputContainer" class="mb-3" style="display: none;">
-                <input type="text" class="form-control" placeholder="Cari nama warga..." id="searchInput">
-            </div>
-
             <?php
             include "../config/connect.php";
 
@@ -86,15 +74,10 @@
                 <div class="table-container mt-3 border rounded">
 
                     <!-- Header Iuran (klik untuk lipat/buka) -->
-                    <button
-                        type="button"
+                    <button type="button"
                         class="w-100 text-start p-3 bg-primary text-white border-0 d-flex justify-content-between align-items-center"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#iuran-<?= (int)$tId ?>"
-                        aria-expanded="false"
-                        aria-controls="iuran-<?= (int)$tId ?>"
-                        style="border-radius: .375rem .375rem 0 0;"
-                    >
+                        data-bs-toggle="collapse" data-bs-target="#iuran-<?= (int) $tId ?>" aria-expanded="false"
+                        aria-controls="iuran-<?= (int) $tId ?>" style="border-radius: .375rem .375rem 0 0;">
                         <div>
                             <strong><?= htmlspecialchars($group['t_keterangan']) ?></strong><br>
                             <small>
@@ -106,7 +89,7 @@
                     </button>
 
                     <!-- Isi Iuran (default terlipat) -->
-                    <div id="iuran-<?= (int)$tId ?>" class="collapse">
+                    <div id="iuran-<?= (int) $tId ?>" class="collapse">
                         <div class="p-3">
 
                             <div class="table-responsive">
@@ -131,7 +114,7 @@
                                         $no = 1;
                                         foreach ($group['items'] as $row) {
                                             $foto = $row['bFoto'] ?? '';
-                                        ?>
+                                            ?>
                                             <tr data-foto="<?= htmlspecialchars($foto) ?>">
                                                 <td><?= $no++ ?></td>
                                                 <td><?= htmlspecialchars($row['username']) ?></td>
@@ -143,7 +126,7 @@
                                                     if ($row['bStatus'] === NULL) {
                                                         echo '<span class="badge bg-secondary">Belum Bayar</span>';
                                                     } elseif ($row['bStatus'] === 'Verifikasi') {
-                                                        echo '<button class="btn btn-warning btn-verifikasi" data-id="' . (int)$row['bId'] . '">
+                                                        echo '<button class="btn btn-warning btn-verifikasi" data-id="' . (int) $row['bId'] . '">
                                                                 Verifikasi
                                                               </button>';
                                                     } elseif ($row['bStatus'] === 'Disetujui') {
@@ -171,7 +154,8 @@
     <!-- =========================
          MODAL TAMBAH TAGIHAN
     ========================== -->
-    <div class="modal fade" id="tambahTagihanModal" tabindex="-1" aria-labelledby="tambahTagihanModalLabel" aria-hidden="true">
+    <div class="modal fade" id="tambahTagihanModal" tabindex="-1" aria-labelledby="tambahTagihanModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
 
@@ -181,7 +165,8 @@
                 </div>
 
                 <div class="modal-body">
-                    <form id="formTambahTagihan" enctype="multipart/form-data" action="../config/insert_iuran.php" method="POST">
+                    <form id="formTambahTagihan" enctype="multipart/form-data" action="../config/insert_iuran.php"
+                        method="POST">
 
                         <div class="mb-3">
                             <label class="form-label">Izin Pengajuan (Ketua)</label>
@@ -197,7 +182,8 @@
 
                         <div class="mb-3">
                             <label for="keteranganTagihan" class="form-label">Keterangan</label>
-                            <textarea class="form-control" id="keteranganTagihan" name="t_keterangan" rows="3" required></textarea>
+                            <textarea class="form-control" id="keteranganTagihan" name="t_keterangan" rows="3"
+                                required></textarea>
                         </div>
 
                         <div class="mb-3">
@@ -217,7 +203,8 @@
 
                         <div class="mb-3">
                             <label for="fotoQR" class="form-label">Foto QR</label>
-                            <input type="file" class="form-control" name="foto_qr" id="fotoQR" accept="image/*" required>
+                            <input type="file" class="form-control" name="foto_qr" id="fotoQR" accept="image/*"
+                                required>
                         </div>
 
                         <div class="modal-footer">
@@ -235,34 +222,10 @@
     </div>
 
     <!-- =========================
-         MODAL IMPORT
-    ========================== -->
-    <div class="modal fade" id="importDataModal" tabindex="-1" aria-labelledby="importDataModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="importDataModalLabel">Import Data Pembayaran</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Silakan unggah file Excel/CSV yang berisi data pembayaran.</p>
-                    <input type="file" class="form-control mb-3" accept=".xlsx,.xls,.csv" id="fileImport">
-                    <div class="alert alert-info">
-                        Format file: Nama, Tanggal, Keterangan, Jumlah
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-success" id="btnImportFile">Import Sekarang</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- =========================
          MODAL VERIFIKASI
     ========================== -->
-    <div class="modal fade" id="verifikasiModal" tabindex="-1" aria-labelledby="verifikasiModalLabel" aria-hidden="true">
+    <div class="modal fade" id="verifikasiModal" tabindex="-1" aria-labelledby="verifikasiModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -284,12 +247,10 @@
                     <div class="mb-3">
                         <label class="form-label">Foto Pembayaran (klik untuk fullscreen)</label>
                         <div class="border rounded p-2 text-center"
-                             style="height: 220px; display:flex; align-items:center; justify-content:center;">
-                            <img id="modalFoto"
-                                 src="https://via.placeholder.com/300?text=No+Image"
-                                 class="img-fluid img-thumbnail"
-                                 style="max-height: 200px; cursor: zoom-in;"
-                                 alt="Foto Pembayaran">
+                            style="height: 220px; display:flex; align-items:center; justify-content:center;">
+                            <img id="modalFoto" src="https://via.placeholder.com/300?text=No+Image"
+                                class="img-fluid img-thumbnail" style="max-height: 200px; cursor: zoom-in;"
+                                alt="Foto Pembayaran">
                         </div>
                     </div>
                 </div>
@@ -309,14 +270,11 @@
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content bg-dark">
                 <div class="modal-header border-0">
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body text-center">
-                    <img id="previewFullImage"
-                         src=""
-                         class="img-fluid"
-                         style="max-height: 90vh;"
-                         alt="Preview Full">
+                    <img id="previewFullImage" src="" class="img-fluid" style="max-height: 90vh;" alt="Preview Full">
                 </div>
             </div>
         </div>
@@ -325,152 +283,173 @@
     <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <script>
-    document.addEventListener('click', function (e) {
+        document.addEventListener('click', function (e) {
 
-        if (e.target.closest('#btnTambahTagihan')) {
-            const modalEl = document.getElementById('tambahTagihanModal');
-            if (!modalEl) return;
-            bootstrap.Modal.getOrCreateInstance(modalEl).show();
-            return;
-        }
+            if (e.target.closest('#btnTambahTagihan')) {
+                const modalEl = document.getElementById('tambahTagihanModal');
+                if (!modalEl) return;
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                return;
+            }
 
-        const btnVerif = e.target.closest('.btn-verifikasi');
-        if (btnVerif) {
+            const btnVerif = e.target.closest('.btn-verifikasi');
+            if (btnVerif) {
 
-            const row = btnVerif.closest('tr');
-            const bId = btnVerif.getAttribute('data-id');
+                const row = btnVerif.closest('tr');
+                const bId = btnVerif.getAttribute('data-id');
 
-            document.getElementById('modalNama').value =
-                row.cells[1].textContent.trim();
-            document.getElementById('modalTanggal').value =
-                row.cells[2].textContent.trim();
+                document.getElementById('modalNama').value =
+                    row.cells[1].textContent.trim();
+                document.getElementById('modalTanggal').value =
+                    row.cells[2].textContent.trim();
 
-            const fotoName = row.dataset.foto || "";
-            const fotoPath = fotoName
-                ? ("../uploads/" + fotoName)
-                : "https://via.placeholder.com/300?text=No+Image";
+                const fotoName = row.dataset.foto || "";
+                const fotoPath = fotoName
+                    ? ("../uploads/" + fotoName)
+                    : "https://via.placeholder.com/300?text=No+Image";
 
-            const modalFoto = document.getElementById('modalFoto');
-            modalFoto.src = fotoPath;
-            modalFoto.dataset.fullsrc = fotoPath;
+                const modalFoto = document.getElementById('modalFoto');
+                modalFoto.src = fotoPath;
+                modalFoto.dataset.fullsrc = fotoPath;
 
-            const modal = document.getElementById('verifikasiModal');
-            modal.dataset.paymentId = bId;
+                const modal = document.getElementById('verifikasiModal');
+                modal.dataset.paymentId = bId;
 
-            bootstrap.Modal.getOrCreateInstance(modal).show();
-            return;
-        }
+                bootstrap.Modal.getOrCreateInstance(modal).show();
+                return;
+            }
 
-        if (e.target && e.target.id === 'modalFoto') {
-            const fotoPath = e.target.dataset.fullsrc || e.target.src;
+            if (e.target && e.target.id === 'modalFoto') {
+                const fotoPath = e.target.dataset.fullsrc || e.target.src;
 
-            document.getElementById('previewFullImage').src = fotoPath;
+                document.getElementById('previewFullImage').src = fotoPath;
 
-            const previewEl = document.getElementById('imagePreviewModal');
-            bootstrap.Modal.getOrCreateInstance(previewEl, { backdrop: false }).show();
-            return;
-        }
+                const previewEl = document.getElementById('imagePreviewModal');
+                bootstrap.Modal.getOrCreateInstance(previewEl, { backdrop: false }).show();
+                return;
+            }
 
-        if (e.target.id === 'btnSetuju') {
-            const modal = document.getElementById('verifikasiModal');
-            const bId = modal.dataset.paymentId;
+            if (e.target.id === 'btnSetuju') {
+                const modal = document.getElementById('verifikasiModal');
+                const bId = modal.dataset.paymentId;
 
-            fetch('../config/update_status_iuran.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `bId=${encodeURIComponent(bId)}&status=Disetujui`
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) location.reload();
-                else alert(data.msg || 'Gagal update');
-            })
-            .catch(err => alert('Fetch error: ' + err));
+                fetch('../config/update_status_iuran.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `bId=${encodeURIComponent(bId)}&status=Disetujui`
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) location.reload();
+                        else alert(data.msg || 'Gagal update');
+                    })
+                    .catch(err => alert('Fetch error: ' + err));
 
-            return;
-        }
+                return;
+            }
 
-        if (e.target.classList.contains('btn-danger') && e.target.closest('#verifikasiModal')) {
-            const modal = document.getElementById('verifikasiModal');
-            const bId = modal.dataset.paymentId;
+            if (e.target.classList.contains('btn-danger') && e.target.closest('#verifikasiModal')) {
+                const modal = document.getElementById('verifikasiModal');
+                const bId = modal.dataset.paymentId;
 
-            fetch('../config/update_status_iuran.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `bId=${encodeURIComponent(bId)}&status=Ditolak`
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) location.reload();
-                else alert(data.msg || 'Gagal update');
-            })
-            .catch(err => alert('Fetch error: ' + err));
+                fetch('../config/update_status_iuran.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `bId=${encodeURIComponent(bId)}&status=Ditolak`
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) location.reload();
+                        else alert(data.msg || 'Gagal update');
+                    })
+                    .catch(err => alert('Fetch error: ' + err));
 
-            return;
-        }
-    });
+                return;
+            }
+        });
     </script>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function () {
 
-        const selectPengajuan = document.getElementById('pId');
-        const btnSimpan = document.getElementById('btnSimpan');
+            const selectPengajuan = document.getElementById('pId');
+            const btnSimpan = document.getElementById('btnSimpan');
 
-        if (!selectPengajuan) return;
+            if (!selectPengajuan) return;
 
-        fetch('../config/get_pengajuan_modal.php')
-            .then(res => res.json())
-            .then(data => {
+            fetch('../config/get_pengajuan_modal.php')
+                .then(res => res.json())
+                .then(data => {
 
-                selectPengajuan.innerHTML =
-                    '<option value="">-- Pilih Pengajuan --</option>';
+                    selectPengajuan.innerHTML =
+                        '<option value="">-- Pilih Pengajuan --</option>';
 
-                if (!Array.isArray(data) || data.length === 0) {
-                    const opt = document.createElement('option');
-                    opt.textContent = 'Tidak ada pengajuan';
-                    opt.disabled = true;
-                    selectPengajuan.appendChild(opt);
-                    return;
+                    if (!Array.isArray(data) || data.length === 0) {
+                        const opt = document.createElement('option');
+                        opt.textContent = 'Tidak ada pengajuan';
+                        opt.disabled = true;
+                        selectPengajuan.appendChild(opt);
+                        return;
+                    }
+
+                    data.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.pId;
+
+                        // ❌ BLOK jika bukan pemasukan
+                        if (p.jenis_pengajuan === 'Pengeluaran') {
+                            opt.textContent =
+                                `#${p.pId} | ${p.pKeterangan} (Pengeluaran - Tidak bisa digunakan`;
+                            opt.disabled = true;
+                            opt.style.color = 'red';
+                            opt.style.fontWeight = 'bold';
+
+                        }
+                        // ❌ BLOK jika belum disetujui
+                        else if (p.pStatus !== 'Disetujui') {
+                            opt.textContent =
+                                `#${p.pId} | ${p.pKeterangan} (Belum Disetujui)`;
+                            opt.disabled = true;
+                            opt.style.color = '#6c757d';
+                        }
+                        // ❌ BLOK jika sudah dipakai
+                        else if (p.digunakan === 'Ya') {
+                            opt.textContent =
+                                `#${p.pId} | ${p.pKeterangan} (Sudah Digunakan)`;
+                            opt.disabled = true;
+                            opt.style.color = '#6c757d';
+                        }
+                        // ✅ BOLEH dipakai
+                        else {
+                            opt.textContent =
+                                `#${p.pId} | ${p.pKeterangan}`;
+                            opt.style.color = '#198754'; // hijau
+                            opt.style.fontWeight = '500';
+                        }
+
+                        selectPengajuan.appendChild(opt);
+                    });
+
+                })
+                .catch(err => console.error('Gagal load pengajuan:', err));
+
+            selectPengajuan.addEventListener('change', function () {
+                const selected = this.options[this.selectedIndex];
+
+                if (!this.value || selected.disabled) {
+                    btnSimpan.disabled = true;
+                    btnSimpan.className = 'btn btn-danger';
+                    btnSimpan.innerHTML = '🚫 Simpan Iuran';
+                } else {
+                    btnSimpan.disabled = false;
+                    btnSimpan.className = 'btn btn-success';
+                    btnSimpan.innerHTML = '✔ Simpan Iuran';
                 }
+            });
 
-                data.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.pId;
-
-                    if (p.pStatus !== 'Disetujui') {
-                        opt.textContent = `#${p.pId} | ${p.pKeterangan} (Belum Disetujui)`;
-                        opt.disabled = true;
-                    }
-                    else if (p.digunakan === 'Ya') {
-                        opt.textContent = `#${p.pId} | ${p.pKeterangan} (Sudah Digunakan)`;
-                        opt.disabled = true;
-                    }
-                    else {
-                        opt.textContent = `#${p.pId} | ${p.pKeterangan}`;
-                    }
-
-                    selectPengajuan.appendChild(opt);
-                });
-            })
-            .catch(err => console.error('Gagal load pengajuan:', err));
-
-        selectPengajuan.addEventListener('change', function () {
-            const selected = this.options[this.selectedIndex];
-
-            if (!this.value || selected.disabled) {
-                btnSimpan.disabled = true;
-                btnSimpan.className = 'btn btn-danger';
-                btnSimpan.innerHTML = '🚫 Simpan Iuran';
-            } else {
-                btnSimpan.disabled = false;
-                btnSimpan.className = 'btn btn-success';
-                btnSimpan.innerHTML = '✔ Simpan Iuran';
-            }
         });
-
-    });
     </script>
 
 </body>
+
 </html>

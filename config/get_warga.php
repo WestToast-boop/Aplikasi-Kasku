@@ -1,12 +1,9 @@
 <?php
 include "connect.php";
+header('Content-Type: application/json');
 
-$result = mysqli_query($koneksi, "SELECT userId, username, role FROM user ORDER BY username ASC");
-
-$rows = [];
-while ($row = mysqli_fetch_assoc($result)) {
-    $rows[] = $row;
-}
-
-echo json_encode($rows);
-?>
+$res = $koneksi->query("SELECT userId, username, role FROM user ORDER BY username ASC");
+$data = [];
+while ($row = $res->fetch_assoc())
+    $data[] = $row;
+echo json_encode($data);

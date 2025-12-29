@@ -2,25 +2,73 @@
 include "connect.php";
 session_start();
 
-$id     = $_POST['pId'];
-$aksi   = $_POST['aksi'];
-$alasan = mysqli_real_escape_string($koneksi, $_POST['pAlasan']);
+/**
+ * ============================
+ * VALIDASI SESSION
+ * ============================
+ */
+if (!isset($_SESSION['userId']) || $_SESSION['role'] !== 'ketua') {
+    die("Akses ditolak");
+}
 
-if ($aksi == "Setuju") {
+$verifikator_id = $_SESSION['userId'];
+
+/**
+ * ============================
+ * AMBIL DATA POST
+ * ============================
+ */
+$pId = $_POST['pId'] ?? null;
+$aksi = $_POST['aksi'] ?? null;
+$alasan = $_POST['pAlasan'] ?? '';
+
+if (!$pId || !$aksi) {
+    die("Data tidak lengkap");
+}
+
+/**
+ * ============================
+ * TENTUKAN STATUS
+ * ============================
+ */
+if ($aksi === "Setuju") {
     $status = "Disetujui";
-} else {
+} elseif ($aksi === "Tolak") {
     $status = "Ditolak";
-}
-
-$query = "
-    UPDATE pengajuan 
-    SET pStatus='$status', pAlasan='$alasan'
-    WHERE pId='$id'
-";
-
-if (mysqli_query($koneksi, $query)) {
-    echo "<script>alert('Status berhasil diperbarui'); window.location='../ketua/ketua_pengajuan.php';</script>";
 } else {
-    echo "Error: " . mysqli_error($koneksi);
+    die("Aksi tidak valid");
 }
-?>
+
+/**
+ * ============================
+ * UPDATE PENGAJUAN
+ * ============================
+ */
+$stmt = $koneksi->prepare("
+    UPDATE pengajuan
+    SET 
+        pStatus = ?,
+        pAlasan = ?,
+        verifikator_userid = ?
+    WHERE pId = ?
+");
+
+$stmt->bind_param(
+    "ssii",
+    $status,
+    $alasan,
+    $verifikator_id,
+    $pId
+);
+
+if ($stmt->execute()) {
+    echo "<script>
+        alert('Status pengajuan berhasil diperbarui');
+        window.location='../ketua/ketua_pengajuan.php';
+    </script>";
+} else {
+    echo "Error: " . $stmt->error;
+}
+
+$stmt->close();
+$koneksi->close();

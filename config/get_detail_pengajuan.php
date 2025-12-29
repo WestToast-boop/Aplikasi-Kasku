@@ -1,11 +1,42 @@
 <?php
-include 'connect.php';
+include "connect.php";
+session_start();
 
-$id = $_GET['pId'];
+header('Content-Type: application/json');
 
-$stmt = $koneksi->prepare("SELECT * FROM pengajuan WHERE pId = ?");
-$stmt->bind_param("i", $id);
+$pId = $_GET['pId'] ?? null;
+
+if (!$pId) {
+    echo json_encode(['success' => false, 'message' => 'pId wajib']);
+    exit;
+}
+
+$sql = "
+    SELECT
+        p.*,
+        u.username AS nama_pengaju
+    FROM pengajuan p
+    JOIN user u ON u.userId = p.pengaju_userid
+    WHERE p.pId = ?
+    LIMIT 1
+";
+
+$stmt = $koneksi->prepare($sql);
+if (!$stmt) {
+    echo json_encode(['success' => false, 'message' => $koneksi->error]);
+    exit;
+}
+
+$stmt->bind_param("i", $pId);
 $stmt->execute();
+$res = $stmt->get_result();
+$row = $res->fetch_assoc();
 
-$result = $stmt->get_result();
-echo json_encode($result->fetch_assoc());
+if ($row) {
+    echo json_encode($row);
+} else {
+    echo json_encode(['success' => false, 'message' => 'Data tidak ditemukan']);
+}
+
+$stmt->close();
+$koneksi->close();

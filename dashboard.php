@@ -20,6 +20,7 @@ $querySaldo = mysqli_query($koneksi, "
             SELECT SUM(pJumlah)
             FROM pengajuan
             WHERE pStatus = 'Disetujui'
+              AND jenis_pengajuan = 'Pengeluaran'
         ), 0) AS pengeluaran
 ");
 
@@ -34,6 +35,7 @@ $queryKeluar = mysqli_query($koneksi, "
     SELECT COALESCE(SUM(pJumlah), 0) AS total
     FROM pengajuan
     WHERE pStatus='Disetujui'
+      AND jenis_pengajuan='Pengeluaran'
       AND MONTH(pTanggal) = MONTH(CURDATE())
       AND YEAR(pTanggal)  = YEAR(CURDATE())
 ");
@@ -213,4 +215,4 @@ while ($row = mysqli_fetch_assoc($queryBar)) {
     </script>
 </body>
 
-</html> 
+</html>
